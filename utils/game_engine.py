@@ -4,49 +4,117 @@ from google import genai
 from google.genai import types
 
 def get_genai_client(api_key: str = None):
-    """Initialise le client officiel Google GenAI."""
+    """
+    Initialise et retourne le client officiel Google GenAI.
+    Recherche la clé passée en paramètre ou dans les variables d'environnement.
+    """
     key = api_key or os.environ.get("GEMINI_API_KEY")
     if not key:
         return None
     return genai.Client(api_key=key)
 
+
+def generate_scenario(client: genai.Client) -> dict:
+    """
+    Génère dynamiquement un scénario/cas pratique hyper pertinent et ancré 
+    dans le contexte socioculturel et numérique de la Côte d'Ivoire.
+    """
+    system_instruction = """Tu es un concepteur pédagogique expert en civisme, droit et éthique en Côte d'Ivoire.
+Génère une situation/cas pratique réaliste auquel un citoyen ivoirien (jeune, professionnel, étudiant) peut être confronté au quotidien.
+
+THÉMATIQUES POSSIBLES (varie à chaque fois) :
+- Rumeurs et fausses informations sur WhatsApp / Facebook / TikTok (ex: grèves, alertes sécuritaires, scandales).
+- Arnaques et transactions suspectes sur Mobile Money (Orange, Wave, MTN, Moov).
+- Droit à l'image et publication de vidéos sans consentement (ex: bagarres, accidents).
+- Civisme routier et comportements face aux forces de l'ordre.
+- Diffamation ou cyberharcèlement dans des groupes communautaires.
+
+EXIGENCES :
+- Propose 3 choix d'action distincts (ex: réagir à chaud, vérifier/signaler, ignorer/complicité).
+- Le ton doit être authentique et local (vocable clair, situations concrètes d'Abidjan ou de l'intérieur).
+
+Réponds STRICTEMENT sous forme d'objet JSON respectant ce schéma sans texte additionnel :
+{
+  "title": "<Titre percutant du cas>",
+  "desc": "<Description détaillée du contexte et du dilemme>",
+  "options": [
+    "<Option A : Choix d'action 1>",
+    "<Option B : Choix d'action 2>",
+    "<Option C : Choix d'action 3>"
+  ]
+}
+"""
+
+    try:
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents="Génère un nouveau dilemme citoyen ivoirien unique et très concret.",
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                response_mime_type="application/json",
+                temperature=0.7 # Température légèrement élevée pour varier les scénarios
+            )
+        )
+        raw_text = response.text.strip()
+        
+        # Nettoyage des balises Markdown de code si présentes
+        if raw_text.startswith("```json"):
+            raw_text = raw_text[7:]
+        if raw_text.endswith("```"):
+            raw_text = raw_text[:-3]
+            
+        return json.loads(raw_text.strip())
+
+    except Exception as e:
+        # Scénario de secours ivoirien en cas de problème réseau/API
+        return {
+            "title": "Alerte Rumeur sur WhatsApp",
+            "desc": "Vous recevez un transfert d'un message audio alarmiste dans un groupe de famille indiquant une pénurie imminente d'eau et d'électricité à Abidjan. L'auteur demande de transférer à tous vos proches.",
+            "options": [
+                "Je transfère immédiatement le message dans tous mes autres groupes pour prévenir mes amis.",
+                "Je vérifie d'abord l'information sur les pages officielles de la CIE/SODECI ou des médias reconnus avant toute action.",
+                "Je réponds dans le groupe que c'est sûrement faux et j'insulte la personne qui a envoyé l'audio."
+            ]
+        }
+
+
 def evaluate_player_choice(client: genai.Client, scenario_title: str, scenario_desc: str, player_choice: str) -> dict:
     """
-    Évalue sévèrement le choix selon le droit ivoirien et renvoie un JSON.
+    Évalue le choix du joueur sous l'angle du Droit Ivoirien moderne et de l'Éthique Biblique.
+    Pas de mauvaise réponse, uniquement une analyse de la pertinence et de la maturité civique.
     """
-    
-    system_instruction = """Tu es le moteur de notation impitoyable d'un jeu de simulation de citoyenneté ivoirienne éclairée.
-Ton but est de sanctionner sévèrement les comportements irresponsables, illégaux ou naïfs, et de récompenser uniquement l'excellence éthique et légale.
+    system_instruction = """Tu es un guide pédagogique et un copilote citoyen éclairé en Côte d'Ivoire.
+Ta mission est d'analyser l'action choisie par le joueur avec bienveillance, discernement et pédagogie.
+Aucune réponse n'est considérée comme "mauvaise" ou "interdite" : il s'agit d'évaluer dans quelle mesure l'action est adéquate, prudente ou mûre face à la situation.
 
-CADRE JURIDIQUE DE RÉFÉRENCE STRICT :
-Toutes tes analyses juridiques et légales doivent se baser STRICTEMENT sur :
-1. La Constitution de la République de Côte d'Ivoire.
-2. Le Code Pénal ivoirien.
-3. La Loi n°2013-451 relative à la cybercriminalité en Côte d'Ivoire (très stricte sur la diffamation, les fausses nouvelles, et le droit à l'image).
+DIRECTIVES D'ANALYSE STRICTES :
 
-MÉTHODE DE NOTATION DURE :
-- Les jauges du joueur commencent à 0 (Neutre/Nouveau Citoyen). Ton but est de les faire monter par des actions héroïques ou de les faire plonger en négatif pour faute grave.
-- Sanctionne lourdement (-20 à -50 points) : La complicité passive, la diffusion de fausses infos, le partage d'images sans consentement, l'insulte, la triche, l'inaction face à un crime.
-- Récompense modérément (+5 à +15 points) : Le signalement officiel, la vérification des faits avant action, la médiation constructive. L'excellence est dure à atteindre.
+1. CADRE JURIDIQUE IVOIRIEN RÉCENT :
+Appuie tes analyses légales sur la législation ivoirienne en vigueur, notamment :
+- Le Nouveau Code Pénal ivoirien (Loi n° 2019-574 du 26 juin 2019) concernant la diffamation, les injures publiques, l'usurpation d'identité et les fausses nouvelles.
+- La Loi n° 2013-451 relative à la cybercriminalité en Côte d'Ivoire.
+- La Loi n° 2013-450 relative à la protection des données à caractère personnel.
+
+2. VOLET ÉTHIQUE ET SAGESSE BIBLIQUE :
+L'analyse éthique et civique doit se fonder sur les valeurs et principes de la Bible (ex: la recherche de la vérité, la prudence, l'amour du prochain, la recherche de la paix, le refus de la calomnie, la maîtrise de soi).
+Intègre subtilement une référence ou une citation biblique pertinente (ex: Proverbes, Évangiles, Épîtres) pour éclairer la décision du joueur.
 
 SITUATION À ÉVALUER :
 - Scénario : {scenario_title}
 - Contexte : {scenario_desc}
-- Action du Joueur : {player_choice}
+- Action choisie par le joueur : {player_choice}
 
 TA MISSION :
-Analyse selon le droit et le civisme ivoirien. Tu dois répondre STRICTEMENT sous la forme d'un objet JSON valide respectant cette structure, sans aucun autre texte :
+Analyse le choix et réponds STRICTEMENT sous la forme d'un objet JSON valide respectant cette structure, sans aucun autre texte autour :
 
 {{
-    "score_citoyennete": <nombre entier sévère, ex: +10 ou -30>,
-    "score_verite": <nombre entier sévère, ex: +5 ou -40>,
-    "score_legalite": <nombre entier sévère, ex: +15 ou -50>,
-    "debriefing": {{
-        "juridique": "<Explication froide et précise basée sur la législation ivoirienne, citant si possible la loi sur la cybercriminalité>",
-        "medias_verite": "<Analyse du niveau de discernement face à l'information>",
-        "ethique_civisme": "<Verdict éthique sur l'impact pour le vivre-ensemble en Côte d'Ivoire>"
-    }},
-    "conseil_judicieux": "<Un conseil direct et formateur pour adopter le comportement d'un citoyen ivoirien exemplaire>"
+  "niveau_adequation": "<Choisis parmi : 'Très adéquate', 'Moyennement adéquate' ou 'Peu adéquate'>",
+  "debriefing": {{
+    "juridique": "<Explication claire basée sur les textes de loi ivoiriens récents>",
+    "medias_verite": "<Analyse du niveau de discernement et d'esprit critique face à l'information>",
+    "ethique_civisme": "<Analyse éthique fondée sur les valeurs et principes bibliques, incluant une référence biblique adaptée (Livre Chapitre:Verset)>"
+  }},
+  "conseil_judicieux": "<Un conseil citoyen et spirituel d'encouragement pour guider le joueur vers une posture exemplaire>"
 }}
 """
 
@@ -58,33 +126,29 @@ Analyse selon le droit et le civisme ivoirien. Tu dois répondre STRICTEMENT sou
 
     try:
         response = client.models.generate_content(
-            model='gemini-3.6-flash', # Utilisation du modèle stable
+            model='gemini-3.6-flash',
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
-                temperature=0.1 # Plus factuel et sévère
+                temperature=0.2
             )
         )
-        
         raw_text = response.text.strip()
-        # Nettoyage minimal du JSON si nécessaire
+        
         if raw_text.startswith("```json"):
             raw_text = raw_text[7:]
         if raw_text.endswith("```"):
             raw_text = raw_text[:-3]
             
         return json.loads(raw_text.strip())
-        
+
     except Exception as e:
-        # Fallback neutre en cas d'erreur
         return {
-            "score_citoyennete": -5, # Punition pour l'erreur technique
-            "score_verite": 0,
-            "score_legalite": -5,
+            "niveau_adequation": "Analyse indisponible",
             "debriefing": {
-                "juridique": f"Défaut technique d'analyse juridique : {str(e)}",
-                "medias_verite": "Évaluation indisponible.",
-                "ethique_civisme": "Impact inconnu."
+                "juridique": f"Défaut d'analyse technique : {str(e)}",
+                "medias_verite": "Indisponible.",
+                "ethique_civisme": "Indisponible."
             },
-            "conseil_judicieux": "Vérifiez votre connexion ou votre clé API."
+            "conseil_judicieux": "Vérifiez votre connexion internet ou votre clé API Gemini."
         }
