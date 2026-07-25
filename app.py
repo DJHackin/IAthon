@@ -1,33 +1,31 @@
 import streamlit as st
+from dotenv import load_dotenv
 from utils.game_engine import get_genai_client, generate_scenario, evaluate_player_choice
-import streamlit as st
-from dotenv import load_dotenv  # <-- AJOUTER CECI
 
-# Charge le fichier .env
+# Charge les variables d'environnement (.env en local)
 load_dotenv()
 
 # Configuration de la page
 st.set_page_config(page_title="Yeshualais", page_icon="🇨🇮", layout="centered")
 
 # ==============================================================================
-# INJECTION DU STYLE CSS (Montserrat + Polices Agrandies)
+# INJECTION DU STYLE CSS (Montserrat, Centrage, Mode Dark/Purple)
 # ==============================================================================
 st.markdown("""
     <style>
-    /* Import de la police Montserrat depuis Google Fonts */
+    /* Import de la police Montserrat */
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
 
-    /* 1. Arrière-plan global en dégradé Violet -> Noir sombre */
+    /* 1. Arrière-plan global */
     .stApp {
         background: linear-gradient(180deg, #5D3EBF 0%, #121124 45%, #0B0B14 100%) !important;
         color: #FFFFFF !important;
         font-family: 'Montserrat', sans-serif !important;
     }
 
-    /* Masquer les éléments Streamlit inutiles */
     #MainMenu, header, footer {visibility: hidden;}
 
-    /* 2. Conteneur principal (Carte de question sombre) */
+    /* 2. Cartes Principales */
     .quiz-card {
         background-color: #1A1832;
         border-radius: 24px;
@@ -39,7 +37,6 @@ st.markdown("""
         font-family: 'Montserrat', sans-serif !important;
     }
 
-    /* Titres et textes dans la carte */
     .quiz-title {
         color: #A0A0C0;
         font-size: 15px;
@@ -51,18 +48,18 @@ st.markdown("""
     
     .quiz-subtitle {
         color: #FFFFFF;
-        font-size: 28px; /* Agrandie */
+        font-size: 28px;
         font-weight: 800;
         margin-bottom: 18px;
     }
 
     .quiz-subtitle span {
-        color: #FF6B00; /* Touche Orange */
+        color: #FF6B00;
     }
 
     .quiz-scenario {
         color: #E2E2EC;
-        font-size: 18px; /* Agrandie */
+        font-size: 18px;
         line-height: 1.6;
         font-weight: 500;
         background: rgba(255, 255, 255, 0.03);
@@ -72,7 +69,7 @@ st.markdown("""
         text-align: left;
     }
 
-    /* 3. Style et Centrage global des Boutons Streamlit (Propositions) */
+    /* 3. Style et Centrage des Boutons d'Option */
     div.stButton {
         display: flex !important;
         justify-content: center !important;
@@ -85,7 +82,7 @@ st.markdown("""
         border: 1px solid #2D2B4A !important;
         border-radius: 16px !important;
         padding: 18px 24px !important;
-        font-size: 17px !important; /* Agrandie */
+        font-size: 17px !important;
         font-weight: 600 !important;
         font-family: 'Montserrat', sans-serif !important;
         line-height: 1.4 !important;
@@ -94,7 +91,6 @@ st.markdown("""
         transition: all 0.2s ease-in-out !important;
     }
 
-    /* Effet d'ouverture / Survol */
     div.stButton > button:hover {
         border-color: #FF6B00 !important;
         background-color: #211F3B !important;
@@ -102,14 +98,14 @@ st.markdown("""
         transform: translateY(-2px);
     }
 
-    /* 4. Bouton principal d'action (Démarrer / Suivant) -> ORANGE PUNCHY */
+    /* 4. Boutons d'Action Principaux (Démarrer / Suivant) */
     .stButton.btn-primary > button {
         background: linear-gradient(90deg, #FF6B00 0%, #FF8800 100%) !important;
         color: #FFFFFF !important;
         border: none !important;
         border-radius: 30px !important;
         padding: 18px 36px !important;
-        font-size: 20px !important; /* Agrandie */
+        font-size: 20px !important;
         font-weight: 700 !important;
         text-align: center !important;
         box-shadow: 0px 8px 20px rgba(255, 107, 0, 0.35) !important;
@@ -120,7 +116,7 @@ st.markdown("""
         transform: scale(1.02);
     }
 
-    /* Cartes de debriefing */
+    /* Cartes de Débriefing */
     .debrief-card {
         background-color: #1A1832;
         border-radius: 16px;
@@ -131,7 +127,7 @@ st.markdown("""
     }
 
     .debrief-header {
-        font-size: 18px; /* Agrandie */
+        font-size: 18px;
         font-weight: 700;
         color: #FF6B00;
         margin-bottom: 10px;
@@ -139,17 +135,17 @@ st.markdown("""
 
     .debrief-text {
         color: #D1D1E0;
-        font-size: 16px; /* Agrandie */
+        font-size: 16px;
         line-height: 1.6;
         font-weight: 500;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# Initialisation du client AI
+# Initialisation de l'IA
 client = get_genai_client()
 
-# Gestion des états de la session
+# États de session
 if "game_started" not in st.session_state:
     st.session_state.game_started = False
 if "current_scenario" not in st.session_state:
@@ -171,12 +167,11 @@ if not st.session_state.game_started:
         </div>
     """, unsafe_allow_html=True)
 
-    # Bouton de démarrage centré
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         st.markdown('<div class="btn-primary">', unsafe_allow_html=True)
         if st.button("Démarrer la partie", use_container_width=True):
-            with st.spinner("Génération du scénario..."):
+            with st.spinner("Génération du premier scénario..."):
                 st.session_state.current_scenario = generate_scenario(client)
                 st.session_state.game_started = True
                 st.session_state.selected_analysis = None
@@ -184,12 +179,11 @@ if not st.session_state.game_started:
         st.markdown('</div>', unsafe_allow_html=True)
 
 # ==============================================================================
-# ÉCRAN 2 : APPLICATION & QUESTIONS
+# ÉCRAN 2 : JEU & QUESTIONS
 # ==============================================================================
 else:
     scenario = st.session_state.current_scenario
 
-    # Carte style "Question 01" de la maquette
     st.markdown(f"""
         <div class="quiz-card">
             <div class="quiz-title">Cas Pratique</div>
@@ -200,11 +194,10 @@ else:
         </div>
     """, unsafe_allow_html=True)
 
-    # Si aucune analyse n'a été demandée, on affiche les options
+    # Affichage des choix de réponse
     if st.session_state.selected_analysis is None:
         st.markdown("<p style='color: #A0A0C0; font-weight:600; font-size: 17px; margin-bottom: 16px; text-align: center;'>Choisissez votre réaction :</p>", unsafe_allow_html=True)
         
-        # Affichage centré des propositions
         for idx, option in enumerate(scenario['options']):
             if st.button(f"{option}", key=f"opt_{idx}", use_container_width=True):
                 with st.spinner("Analyse légale et éthique en cours..."):
@@ -213,11 +206,10 @@ else:
                     )
                     st.rerun()
 
-    # Si l'analyse a été générée, on affiche le Bilan
+    # Affichage du bilan de l'IA
     else:
         res = st.session_state.selected_analysis
         
-        # Statut d'adéquation
         st.markdown(f"""
             <div style="text-align: center; background: #251F47; padding: 14px; border-radius: 12px; border: 1px solid #FF6B00; margin-bottom: 20px;">
                 <span style="color: #A0A0C0; font-size: 16px; font-weight: 500;">Adéquation de l'action :</span> 
@@ -225,7 +217,6 @@ else:
             </div>
         """, unsafe_allow_html=True)
 
-        # Cartes explicatives
         st.markdown(f"""
             <div class="debrief-card">
                 <div class="debrief-header">⚖️ Volet Juridique (Droit Ivoirien)</div>
@@ -250,10 +241,10 @@ else:
 
         st.write("")
         
-        # Bouton Suivant Orange
+        # Bouton pour passer au cas suivant
         st.markdown('<div class="btn-primary">', unsafe_allow_html=True)
         if st.button("Cas suivant ➔", use_container_width=True):
-            with st.spinner("Chargement..."):
+            with st.spinner("Génération d'un nouveau cas..."):
                 st.session_state.current_scenario = generate_scenario(client)
                 st.session_state.selected_analysis = None
                 st.rerun()
