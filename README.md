@@ -1,5 +1,5 @@
 ---
-title: Citoyen Copilot C.I.
+title: Yeshualais
 emoji: ⚖️
 colorFrom: purple
 colorTo: yellow
